@@ -1,0 +1,61 @@
+# https://github.com/awslabs/serverless-application-model/blob/develop/versions/2016-10-31.md
+# Indentation needs to be set with spaces, because YAML...
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Arena stats
+
+Resources:
+    BuildDailyArenaClassStats:
+        Type: AWS::Serverless::Function
+        Properties:
+            Handler: daily/build-daily-arena-class-stats.default
+            Runtime: nodejs16.x
+            Timeout: 880
+            CodeUri: ./dist/daily/build-daily-arena-class-stats
+            MemorySize: 4000
+            ReservedConcurrentExecutions: 10
+            Layers:
+                - !Sub "arn:aws:lambda:${AWS::Region}:580247275435:layer:LambdaInsightsExtension:14"
+            Policies:
+                - AWSLambdaVPCAccessExecutionRole
+                - AmazonSESFullAccess
+                - SecretsManagerReadWrite
+                - AmazonSNSReadOnlyAccess
+                - AmazonS3FullAccess
+                - AWSLambda_FullAccess
+                - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy
+                # - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
+            Tags:
+                LambdaName: cron-build-daily-arena-class-stats
+            Events:
+                LastPeriodTrigger:
+                    Type: Schedule
+                    Properties:
+                        Schedule: cron(0 5 * * ? *)
+    AggregateDailyArenaClassStats:
+        Type: AWS::Serverless::Function
+        Properties:
+            Handler: aggregate/classes/aggregate-daily-arena-class-stats.default
+            Runtime: nodejs16.x
+            Timeout: 880
+            CodeUri: ./dist/aggregate/classes/aggregate-daily-arena-class-stats
+            MemorySize: 1000
+            ReservedConcurrentExecutions: 10
+            Layers:
+                - !Sub "arn:aws:lambda:${AWS::Region}:580247275435:layer:LambdaInsightsExtension:14"
+            Policies:
+                - AWSLambdaVPCAccessExecutionRole
+                - AmazonSESFullAccess
+                - SecretsManagerReadWrite
+                - AmazonSNSReadOnlyAccess
+                - AmazonS3FullAccess
+                - AWSLambda_FullAccess
+                - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy
+                # - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
+            Tags:
+                LambdaName: cron-aggregate-daily-arena-class-stats
+            Events:
+                LastPeriodTrigger:
+                    Type: Schedule
+                    Properties:
+                        Schedule: cron(0 7 * * ? *)
