@@ -1,16 +1,9 @@
-import { CardClass } from '@firestone-hs/reference-data';
 import { Mutable } from '../misc-utils';
 import { ArenaClassStat, WinsDistribution } from '../model';
-import { InternalReplaySummaryDbRow } from './model';
+import { InternalArenaMatchStatsDbRow } from './model';
 
-// Build the list of all classes from the CardClass enum
-export const allClasses: readonly string[] = Object.keys(CardClass)
-	.map((key) => CardClass[key])
-	.filter((value) => typeof value === 'string')
-	.filter((value) => ![CardClass.INVALID, CardClass.NEUTRAL, CardClass.DREAM, CardClass.WHIZBANG].includes(value));
-
-export const buildClassStats = (rows: readonly InternalReplaySummaryDbRow[]): readonly ArenaClassStat[] => {
-	const validRows = rows.filter((row) => row.additionalResult?.includes('-')).filter((row) => row.result?.length > 0);
+export const buildClassStats = (rows: readonly InternalArenaMatchStatsDbRow[]): readonly ArenaClassStat[] => {
+	const validRows = rows;
 	const stats: { [playerClass: string]: ArenaClassStat } = {};
 	for (const row of validRows) {
 		const playerClass = row.playerClass;
@@ -25,7 +18,7 @@ export const buildClassStats = (rows: readonly InternalReplaySummaryDbRow[]): re
 		const stat = stats[playerClass] as Mutable<ArenaClassStat>;
 		stat.totalGames++;
 		stat.totalsWins += row.result === 'won' ? 1 : 0;
-		const currentGameWins = parseInt(row.additionalResult.split('-')[0]);
+		const currentGameWins = row.wins;
 		const gameWinsAfterThisGame = row.result === 'won' ? currentGameWins + 1 : currentGameWins;
 		const winsDistribution = stat.winsDistribution.find(
 			(dist) => dist.wins === gameWinsAfterThisGame,

@@ -1,5 +1,8 @@
-export interface InternalReplaySummaryDbRow {
+export interface InternalArenaMatchStatsDbRow {
 	readonly playerClass: string;
 	readonly result: 'won' | 'lost' | 'tied';
-	readonly additionalResult: string;
+	readonly wins: number;
+	readonly losses: number;
+	readonly playerDecklist: string;
+	readonly matchAnalysis: string;
 }

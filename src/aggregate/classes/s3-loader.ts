@@ -1,7 +1,7 @@
 /* eslint-disable no-case-declarations */
 import { PatchInfo } from '@firestone-hs/aws-lambda-utils';
 import { ARENA_STATS_BUCKET, ARENA_STATS_KEY_PREFIX } from '../../daily/build-daily-arena-class-stats';
-import { ArenaClassStats, TimePeriod } from '../../model';
+import { ArenaCardStats, ArenaClassStats, TimePeriod } from '../../model';
 import { s3 } from './aggregate-daily-arena-class-stats';
 
 export const loadDailyDataClassFromS3 = async (
@@ -14,10 +14,27 @@ export const loadDailyDataClassFromS3 = async (
 	return fileResults.filter((result) => !!result);
 };
 
+export const loadDailyDataCardFromS3 = async (
+	timePeriod: TimePeriod,
+	patchInfo: PatchInfo,
+): Promise<readonly ArenaCardStats[]> => {
+	const daysBack: number = computeDaysBackFromNow(timePeriod, patchInfo);
+	const fileNames: readonly string[] = buildFileNames(daysBack);
+	const fileResults = await Promise.all(fileNames.map((fileName) => loadDailyCardStatsFromS3(fileName)));
+	return fileResults.filter((result) => !!result);
+};
+
 const loadDailyClassStatsFromS3 = async (fileName: string): Promise<ArenaClassStats> => {
 	const fileKey = `${ARENA_STATS_KEY_PREFIX}/classes/daily/${fileName}.gz.json`;
 	const data = await s3.readGzipContent(ARENA_STATS_BUCKET, fileKey, 1, false);
 	const result: ArenaClassStats = JSON.parse(data);
+	return result;
+};
+
+const loadDailyCardStatsFromS3 = async (fileName: string): Promise<ArenaCardStats> => {
+	const fileKey = `${ARENA_STATS_KEY_PREFIX}/cards/daily/${fileName}.gz.json`;
+	const data = await s3.readGzipContent(ARENA_STATS_BUCKET, fileKey, 1, false);
+	const result: ArenaCardStats = JSON.parse(data);
 	return result;
 };
 

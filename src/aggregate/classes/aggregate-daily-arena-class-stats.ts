@@ -5,10 +5,10 @@ import { S3, getLastArenaPatch, sleep } from '@firestone-hs/aws-lambda-utils';
 import { AllCardsService } from '@firestone-hs/reference-data';
 import { Context } from 'aws-lambda';
 import AWS from 'aws-sdk';
-import { ArenaClassStat, ArenaClassStats, TimePeriod } from '../../model';
-import { aggregateClassStats } from './data-merger';
-import { loadDailyDataClassFromS3 } from './s3-loader';
-import { saveClassStats } from './s3-saver';
+import { ArenaCardStats, ArenaClassStat, ArenaClassStats, TimePeriod } from '../../model';
+import { aggregateCardStats, aggregateClassStats } from './data-merger';
+import { loadDailyDataCardFromS3, loadDailyDataClassFromS3 } from './s3-loader';
+import { saveCardStats, saveClassStats } from './s3-saver';
 
 const allCards = new AllCardsService();
 export const s3 = new S3();
@@ -25,9 +25,36 @@ export default async (event, context: Context): Promise<any> => {
 
 	const timePeriod: TimePeriod = event.timePeriod;
 	const patchInfo = await getLastArenaPatch();
+
 	const dailyClassData: readonly ArenaClassStats[] = await loadDailyDataClassFromS3(timePeriod, patchInfo);
 	const aggregatedClassStats: readonly ArenaClassStat[] = aggregateClassStats(dailyClassData);
 	await saveClassStats(aggregatedClassStats, timePeriod);
+
+	const dailyCardsData: readonly ArenaCardStats[] = await loadDailyDataCardFromS3(timePeriod, patchInfo);
+	console.debug(
+		'loaded daily card data',
+		timePeriod,
+		dailyCardsData?.length,
+		dailyCardsData
+			.flatMap((d) => d.stats)
+			.flatMap((s) => s.stats)
+			.map((s) => s.inStartingDeck)
+			.reduce((a, b) => a + b, 0),
+		dailyCardsData[0],
+	);
+	const aggregatedCardStats: readonly ArenaCardStats[] = aggregateCardStats(dailyCardsData);
+	console.debug(
+		'aggregated card stats',
+		timePeriod,
+		aggregatedCardStats?.length,
+		aggregatedCardStats
+			.flatMap((d) => d.stats)
+			.flatMap((s) => s.stats)
+			.map((s) => s.inStartingDeck)
+			.reduce((a, b) => a + b, 0),
+	);
+	await saveCardStats(aggregatedCardStats, timePeriod);
+
 	return { statusCode: 200, body: null };
 };
 

@@ -1,9 +1,9 @@
 import SecretsManager, { GetSecretValueRequest, GetSecretValueResponse } from 'aws-sdk/clients/secretsmanager';
 import { Connection, createPool } from 'mysql';
 import { targetDate } from './build-daily-arena-class-stats';
-import { InternalReplaySummaryDbRow } from './model';
+import { InternalArenaMatchStatsDbRow } from './model';
 
-export const loadRows = async (): Promise<readonly InternalReplaySummaryDbRow[]> => {
+export const loadRows = async (): Promise<readonly InternalArenaMatchStatsDbRow[]> => {
 	const secretRequest: GetSecretValueRequest = {
 		SecretId: 'rds-connection',
 	};
@@ -19,8 +19,8 @@ export const loadRows = async (): Promise<readonly InternalReplaySummaryDbRow[]>
 	return performRowProcessIngPool(pool);
 };
 
-const performRowProcessIngPool = async (pool: any): Promise<readonly InternalReplaySummaryDbRow[]> => {
-	return new Promise<readonly InternalReplaySummaryDbRow[]>((resolve) => {
+const performRowProcessIngPool = async (pool: any): Promise<readonly InternalArenaMatchStatsDbRow[]> => {
+	return new Promise<readonly InternalArenaMatchStatsDbRow[]>((resolve) => {
 		pool.getConnection(async (err, connection) => {
 			if (err) {
 				console.log('error with connection', err);
@@ -34,23 +34,22 @@ const performRowProcessIngPool = async (pool: any): Promise<readonly InternalRep
 	});
 };
 
-const performRowsProcessing = async (connection: Connection): Promise<readonly InternalReplaySummaryDbRow[]> => {
-	return new Promise<readonly InternalReplaySummaryDbRow[]>((resolve) => {
+const performRowsProcessing = async (connection: Connection): Promise<readonly InternalArenaMatchStatsDbRow[]> => {
+	return new Promise<readonly InternalArenaMatchStatsDbRow[]>((resolve) => {
 		// Load all the rows from the day before. Not simply from the past 24 hours, but from the
 		// day before today. For instance, if it's 24/09 at 04:00, we load all the rows that were
 		// inserted on the 23/09, from 00:00 to 23:59
 		console.log('yesterdayStr', targetDate);
 		const queryStr = `
-			SELECT playerClass, result, additionalResult 
-			FROM replay_summary
-			WHERE gameMode = 'arena'
-			AND creationDate >= '${targetDate}'
+			SELECT playerClass, result, wins, losses, playerDecklist, matchAnalysis
+			FROM arena_match_stats
+			WHERE creationDate >= '${targetDate}'
 			AND creationDate < '${targetDate} 23:59:59'
 		`;
 		console.log('running query', queryStr);
 		const query = connection.query(queryStr);
 
-		const rowsToProcess: InternalReplaySummaryDbRow[] = [];
+		const rowsToProcess: InternalArenaMatchStatsDbRow[] = [];
 		query
 			.on('error', (err) => {
 				console.error('error while fetching rows', err);
@@ -58,7 +57,7 @@ const performRowsProcessing = async (connection: Connection): Promise<readonly I
 			.on('fields', (fields) => {
 				console.log('fields', fields);
 			})
-			.on('result', async (row: InternalReplaySummaryDbRow) => {
+			.on('result', async (row: InternalArenaMatchStatsDbRow) => {
 				rowsToProcess.push(row);
 			})
 			.on('end', async () => {
