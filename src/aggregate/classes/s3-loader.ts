@@ -19,6 +19,7 @@ export const loadDailyDataCardFromS3 = async (
 	patchInfo: PatchInfo,
 ): Promise<readonly ArenaCardStats[]> => {
 	const daysBack: number = computeDaysBackFromNow(timePeriod, patchInfo);
+	console.log('days for time period', timePeriod, daysBack, patchInfo);
 	const fileNames: readonly string[] = buildFileNames(daysBack);
 	const fileResults = await Promise.all(fileNames.map((fileName) => loadDailyCardStatsFromS3(fileName)));
 	return fileResults.filter((result) => !!result);
