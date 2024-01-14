@@ -1,7 +1,7 @@
 // This example demonstrates a NodeJS 8.10 async handler[1], however of course you could use
 // the more traditional callback-style handler.
 
-import { S3, getLastArenaPatch, sleep } from '@firestone-hs/aws-lambda-utils';
+import { S3, getLastArenaPatch, logBeforeTimeout, sleep } from '@firestone-hs/aws-lambda-utils';
 import { AllCardsService } from '@firestone-hs/reference-data';
 import { Context } from 'aws-lambda';
 import AWS from 'aws-sdk';
@@ -23,6 +23,7 @@ export default async (event, context: Context): Promise<any> => {
 		return;
 	}
 
+	const cleanup = logBeforeTimeout(context);
 	const timePeriod: TimePeriod = event.timePeriod;
 	const patchInfo = await getLastArenaPatch();
 
@@ -55,6 +56,7 @@ export default async (event, context: Context): Promise<any> => {
 	);
 	await saveCardStats(aggregatedCardStats, timePeriod);
 
+	cleanup();
 	return { statusCode: 200, body: null };
 };
 
