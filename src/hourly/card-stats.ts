@@ -1,6 +1,6 @@
 import { CardAnalysis, MatchAnalysis } from '@firestone-hs/arena-match-stats';
+import { InternalArenaMatchStatsDbRow } from '../internal-model';
 import { ArenaCardData, ArenaCardStat } from '../model';
-import { InternalArenaMatchStatsDbRow } from './model';
 
 export const buildCardStats = (rows: readonly InternalArenaMatchStatsDbRow[]): readonly ArenaCardStat[] => {
 	const cards: { [cardId: string]: { [context: string]: ArenaCardData } } = {};

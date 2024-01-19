@@ -1,9 +1,8 @@
 import SecretsManager, { GetSecretValueRequest, GetSecretValueResponse } from 'aws-sdk/clients/secretsmanager';
 import { Connection, createPool } from 'mysql';
 import { InternalArenaMatchStatsDbRow } from '../internal-model';
-import { targetDate } from './build-daily-arena-class-stats';
 
-export const loadRows = async (): Promise<readonly InternalArenaMatchStatsDbRow[]> => {
+export const loadRows = async (startDate: Date, endDate: Date): Promise<readonly InternalArenaMatchStatsDbRow[]> => {
 	const secretRequest: GetSecretValueRequest = {
 		SecretId: 'rds-connection',
 	};
@@ -16,17 +15,21 @@ export const loadRows = async (): Promise<readonly InternalArenaMatchStatsDbRow[
 		database: 'replay_summary',
 		port: secret.port,
 	});
-	return performRowProcessIngPool(pool);
+	return performRowProcessIngPool(pool, startDate, endDate);
 };
 
-const performRowProcessIngPool = async (pool: any): Promise<readonly InternalArenaMatchStatsDbRow[]> => {
+const performRowProcessIngPool = async (
+	pool: any,
+	startDate: Date,
+	endDate: Date,
+): Promise<readonly InternalArenaMatchStatsDbRow[]> => {
 	return new Promise<readonly InternalArenaMatchStatsDbRow[]>((resolve) => {
 		pool.getConnection(async (err, connection) => {
 			if (err) {
 				console.log('error with connection', err);
 				throw new Error('Could not connect to DB');
 			} else {
-				const result = await performRowsProcessing(connection);
+				const result = await performRowsProcessing(connection, startDate, endDate);
 				connection.release();
 				resolve(result);
 			}
@@ -34,20 +37,20 @@ const performRowProcessIngPool = async (pool: any): Promise<readonly InternalAre
 	});
 };
 
-const performRowsProcessing = async (connection: Connection): Promise<readonly InternalArenaMatchStatsDbRow[]> => {
+const performRowsProcessing = async (
+	connection: Connection,
+	startDate: Date,
+	endDate: Date,
+): Promise<readonly InternalArenaMatchStatsDbRow[]> => {
 	return new Promise<readonly InternalArenaMatchStatsDbRow[]>((resolve) => {
-		// Load all the rows from the day before. Not simply from the past 24 hours, but from the
-		// day before today. For instance, if it's 24/09 at 04:00, we load all the rows that were
-		// inserted on the 23/09, from 00:00 to 23:59
-		console.log('yesterdayStr', targetDate);
 		const queryStr = `
 			SELECT playerClass, result, wins, losses, playerDecklist, matchAnalysis
 			FROM arena_match_stats
-			WHERE creationDate >= '${targetDate}'
-			AND creationDate < '${targetDate} 23:59:59'
+			WHERE creationDate >= ?
+			AND creationDate < ?
 		`;
 		console.log('running query', queryStr);
-		const query = connection.query(queryStr);
+		const query = connection.query(queryStr, [startDate, endDate]);
 
 		const rowsToProcess: InternalArenaMatchStatsDbRow[] = [];
 		query
