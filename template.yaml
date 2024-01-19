@@ -13,7 +13,7 @@ Resources:
             Timeout: 880
             CodeUri: ./dist/hourly/_build-hourly-arena-class-stats
             MemorySize: 2000
-            ReservedConcurrentExecutions: 10
+            ReservedConcurrentExecutions: 5
             Layers:
                 - !Sub "arn:aws:lambda:${AWS::Region}:580247275435:layer:LambdaInsightsExtension:14"
             Policies:
@@ -31,16 +31,16 @@ Resources:
                 LastPeriodTrigger:
                     Type: Schedule
                     Properties:
-                        Schedule: cron(20 * * * ? *)
-    BuildDailyArenaClassStats:
+                        Schedule: cron(15 * * * ? *)
+    BuildDailyAggregateStats:
         Type: AWS::Serverless::Function
         Properties:
-            Handler: daily/build-daily-arena-class-stats.default
-            Runtime: nodejs16.x
+            Handler: daily/_build-daily-aggregate.default
+            Runtime: nodejs18.x
             Timeout: 880
-            CodeUri: ./dist/daily/build-daily-arena-class-stats
+            CodeUri: ./dist/daily/_build-daily-aggregate
             MemorySize: 4000
-            ReservedConcurrentExecutions: 10
+            ReservedConcurrentExecutions: 5
             Layers:
                 - !Sub "arn:aws:lambda:${AWS::Region}:580247275435:layer:LambdaInsightsExtension:14"
             Policies:
@@ -53,21 +53,21 @@ Resources:
                 - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy
                 # - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
             Tags:
-                LambdaName: cron-build-daily-arena-class-stats
+                LambdaName: cron-build-daily-arena-aggregate-stats
             Events:
                 LastPeriodTrigger:
                     Type: Schedule
                     Properties:
                         Schedule: cron(0 5 * * ? *)
-    AggregateDailyArenaClassStats:
+    FinalStats:
         Type: AWS::Serverless::Function
         Properties:
-            Handler: aggregate/classes/aggregate-daily-arena-class-stats.default
-            Runtime: nodejs16.x
+            Handler: final-stats/_build-final-stats.default
+            Runtime: nodejs18.x
             Timeout: 880
-            CodeUri: ./dist/aggregate/classes/aggregate-daily-arena-class-stats
+            CodeUri: ./dist/final-statss/_build-final-stats
             MemorySize: 1000
-            ReservedConcurrentExecutions: 10
+            ReservedConcurrentExecutions: 5
             Layers:
                 - !Sub "arn:aws:lambda:${AWS::Region}:580247275435:layer:LambdaInsightsExtension:14"
             Policies:
@@ -80,9 +80,10 @@ Resources:
                 - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy
                 # - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
             Tags:
-                LambdaName: cron-aggregate-daily-arena-class-stats
+                LambdaName: cron-arena-final-stats
             Events:
                 LastPeriodTrigger:
                     Type: Schedule
                     Properties:
-                        Schedule: cron(0 7 * * ? *)
+                        # Cron that runs every hour at 25 minutes past the hour
+                        Schedule: cron(25 * * * ? *)

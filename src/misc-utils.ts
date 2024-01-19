@@ -2,10 +2,11 @@
 export const yesterdayDate = () => {
 	const now = new Date();
 	const yesterday = new Date(now.setDate(now.getDate() - 1));
-	const year = yesterday.getFullYear();
-	const month = yesterday.getMonth() + 1;
-	const day = yesterday.getDate();
-	return `${year}-${month}-${day}`;
+	yesterday.setHours(0);
+	yesterday.setMinutes(0);
+	yesterday.setSeconds(0);
+	yesterday.setMilliseconds(0);
+	return yesterday.toISOString();
 };
 
 export type Mutable<T> = {

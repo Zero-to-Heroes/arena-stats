@@ -1,5 +1,5 @@
 import { ALL_CLASSES } from '@firestone-hs/reference-data';
-import { ArenaCardStat, ArenaCardStats, ArenaClassStat, ArenaClassStats } from '../../model';
+import { ArenaCardStat, ArenaCardStats, ArenaClassStat, ArenaClassStats } from '../model';
 
 export const aggregateClassStats = (dailyClassData: readonly ArenaClassStats[]): readonly ArenaClassStat[] => {
 	const result: { [playerClass: string]: ArenaClassStat } = {};

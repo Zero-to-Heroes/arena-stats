@@ -1,7 +1,7 @@
 import { gzipSync } from 'zlib';
-import { ARENA_STATS_BUCKET, ARENA_STATS_KEY_PREFIX } from '../../daily/build-daily-arena-class-stats';
-import { ArenaCardStats, ArenaClassStat, ArenaClassStats, TimePeriod } from '../../model';
-import { s3 } from './aggregate-daily-arena-class-stats';
+import { ARENA_STATS_BUCKET, ARENA_STATS_KEY_PREFIX } from '../common/config';
+import { ArenaCardStats, ArenaClassStat, ArenaClassStats, TimePeriod } from '../model';
+import { s3 } from './_build-final-stats';
 
 export const saveClassStats = async (classStats: readonly ArenaClassStat[], timePeriod: TimePeriod): Promise<void> => {
 	const result: ArenaClassStats = {

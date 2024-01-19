@@ -5,11 +5,9 @@ import { S3, logBeforeTimeout, sleep } from '@firestone-hs/aws-lambda-utils';
 import { AllCardsService } from '@firestone-hs/reference-data';
 import { Context } from 'aws-lambda';
 import AWS from 'aws-sdk';
-import { InternalArenaMatchStatsDbRow } from '../internal-model';
-import { buildCardStats } from './card-stats';
-import { buildClassStats } from './class-stats';
-import { saveCardStats, saveClassStats } from './persist-data';
-import { loadRows } from './rows';
+import { yesterdayDate } from '../misc-utils';
+import { handleCardStats } from './card-stats';
+import { handleClassStats } from './class-stats';
 
 const allCards = new AllCardsService();
 const s3 = new S3();
@@ -25,50 +23,29 @@ export default async (event, context: Context): Promise<any> => {
 		return;
 	}
 
-	const processStartDate = buildProcessStartDate(event);
-	const processEndDate = new Date(processStartDate);
-	processEndDate.setHours(processEndDate.getHours() + 1);
-
-	const rows: readonly InternalArenaMatchStatsDbRow[] = await loadRows(processStartDate, processEndDate);
-	const classStats = buildClassStats(rows);
-	const cardStats = buildCardStats(rows);
-
-	await saveClassStats(classStats, processStartDate, s3);
-	await saveCardStats(cardStats, processStartDate, s3);
+	const targetDate: string = event.targetDate || yesterdayDate();
+	await handleClassStats(targetDate, s3);
+	await handleCardStats(targetDate, s3);
 
 	cleanup();
 	return { statusCode: 200, body: null };
 };
 
-const buildProcessStartDate = (event): Date => {
-	if (event.targetDate) {
-		const targetDate = new Date(event.targetDate);
-		return targetDate;
-	}
-
-	// Start from the start of the current hour
-	const processStartDate = new Date();
-	processStartDate.setHours(processStartDate.getHours() - 1);
-	processStartDate.setMinutes(0);
-	processStartDate.setSeconds(0);
-	processStartDate.setMilliseconds(0);
-	return processStartDate;
-};
-
-const dispatchCatchUpEvents = async (context: Context, daysInThePast: number) => {
-	// Build a list of hours for the last `daysInThePast` days, in the format YYYY-MM-ddTHH:mm:ss.sssZ
+const dispatchCatchUpEvents = async (context: Context, numberOfDays: number) => {
+	// Build a list of days for the last 30 days, in the format YYYY-MM-dd
 	const now = new Date();
-	const hours = [];
-	for (let i = 0; i < 24 * daysInThePast; i++) {
+	const days = [];
+	for (let i = 0; i < numberOfDays; i++) {
 		const baseDate = new Date(now);
+		baseDate.setHours(0);
 		baseDate.setMinutes(0);
 		baseDate.setSeconds(0);
 		baseDate.setMilliseconds(0);
-		const hour = new Date(baseDate.getTime() - i * 60 * 60 * 1000);
-		hours.push(hour.toISOString());
+		const day = new Date(baseDate.getTime() - i * 24 * 60 * 60 * 1000);
+		days.push(day);
 	}
 
-	for (const targetDate of hours) {
+	for (const targetDate of days) {
 		console.log('dispatching catch-up for date', targetDate);
 		const newEvent = {
 			targetDate: targetDate,

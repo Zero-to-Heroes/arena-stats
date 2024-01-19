@@ -5,7 +5,7 @@ import { S3, getLastArenaPatch, logBeforeTimeout, sleep } from '@firestone-hs/aw
 import { AllCardsService } from '@firestone-hs/reference-data';
 import { Context } from 'aws-lambda';
 import AWS from 'aws-sdk';
-import { ArenaCardStats, ArenaClassStat, ArenaClassStats, TimePeriod } from '../../model';
+import { ArenaCardStats, ArenaClassStat, ArenaClassStats, TimePeriod } from '../model';
 import { aggregateCardStats, aggregateClassStats } from './data-merger';
 import { loadDailyDataCardFromS3, loadDailyDataClassFromS3 } from './s3-loader';
 import { saveCardStats, saveClassStats } from './s3-saver';
