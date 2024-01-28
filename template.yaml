@@ -65,7 +65,7 @@ Resources:
             Handler: final-stats/_build-final-stats.default
             Runtime: nodejs18.x
             Timeout: 880
-            CodeUri: ./dist/final-statss/_build-final-stats
+            CodeUri: ./dist/final-stats/_build-final-stats
             MemorySize: 1000
             ReservedConcurrentExecutions: 5
             Layers:
