@@ -6,6 +6,10 @@ export const buildCardStats = (rows: readonly InternalArenaMatchStatsDbRow[]): r
 	const cards: { [cardId: string]: { [context: string]: ArenaCardData } } = {};
 	for (const row of rows) {
 		const matchAnalysis: MatchAnalysis = JSON.parse(row.matchAnalysis);
+		if (!matchAnalysis) {
+			console.warn('missing match analysis data', row);
+			continue;
+		}
 		const cardsAnalysis: readonly CardAnalysis[] = matchAnalysis.cardsAnalysis;
 		const playerClass = row.playerClass;
 		for (let i = 0; i < cardsAnalysis.length; i++) {

@@ -44,7 +44,7 @@ const performRowsProcessing = async (
 ): Promise<readonly InternalArenaMatchStatsDbRow[]> => {
 	return new Promise<readonly InternalArenaMatchStatsDbRow[]>((resolve) => {
 		const queryStr = `
-			SELECT playerClass, result, wins, losses, playerDecklist, matchAnalysis
+			SELECT id, playerClass, result, wins, losses, playerDecklist, matchAnalysis
 			FROM arena_match_stats
 			WHERE creationDate >= ?
 			AND creationDate < ?
