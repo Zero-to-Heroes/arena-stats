@@ -1,4 +1,4 @@
-import { CardAnalysis, MatchAnalysis } from '@firestone-hs/arena-match-stats';
+import { CardAnalysis, MatchAnalysis } from '@firestone-hs/replay-metadata';
 import { InternalArenaMatchStatsDbRow } from '../internal-model';
 import { ArenaCardData, ArenaCardStat } from '../model';
 
@@ -47,6 +47,10 @@ const updateCardStats = (cardContext: ArenaCardData, result: string, cardAnalysi
 	cardContext.inHandAfterMulliganThenWin += cardAnalysis.mulligan && result === 'won' ? 1 : 0;
 	cardContext.drawn += cardAnalysis.drawnTurn > 0 ? 1 : 0;
 	cardContext.drawnThenWin += cardAnalysis.drawnTurn > 0 && result === 'won' ? 1 : 0;
+	cardContext.played += cardAnalysis.playedTurn > 0 ? 1 : 0;
+	cardContext.playedThenWin += cardAnalysis.playedTurn > 0 && result === 'won' ? 1 : 0;
+	cardContext.playedOnCurve += cardAnalysis.playedOnCurve ? 1 : 0;
+	cardContext.playedOnCurveThenWin += cardAnalysis.playedOnCurve && result === 'won' ? 1 : 0;
 };
 
 const getCardContext = (
@@ -67,6 +71,10 @@ const getCardContext = (
 			inHandAfterMulliganThenWin: 0,
 			drawn: 0,
 			drawnThenWin: 0,
+			played: 0,
+			playedThenWin: 0,
+			playedOnCurve: 0,
+			playedOnCurveThenWin: 0,
 		};
 	}
 	return cards[cardId][context];

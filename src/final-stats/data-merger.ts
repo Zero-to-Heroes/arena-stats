@@ -75,6 +75,10 @@ const mergeDailyCardData = (dailyCardData: readonly ArenaCardStat[], context: st
 					inHandAfterMulliganThenWin: 0,
 					drawn: 0,
 					drawnThenWin: 0,
+					played: 0,
+					playedThenWin: 0,
+					playedOnCurve: 0,
+					playedOnCurveThenWin: 0,
 				},
 			};
 		}
@@ -86,6 +90,10 @@ const mergeDailyCardData = (dailyCardData: readonly ArenaCardStat[], context: st
 		result[cardStat.cardId].stats.inHandAfterMulliganThenWin += cardStat.stats.inHandAfterMulliganThenWin;
 		result[cardStat.cardId].stats.drawn += cardStat.stats.drawn;
 		result[cardStat.cardId].stats.drawnThenWin += cardStat.stats.drawnThenWin;
+		result[cardStat.cardId].stats.played += cardStat.stats.played;
+		result[cardStat.cardId].stats.playedThenWin += cardStat.stats.playedThenWin;
+		result[cardStat.cardId].stats.playedOnCurve += cardStat.stats.playedOnCurve;
+		result[cardStat.cardId].stats.playedOnCurveThenWin += cardStat.stats.playedOnCurveThenWin;
 	}
 	return Object.values(result);
 };

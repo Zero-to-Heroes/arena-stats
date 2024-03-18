@@ -42,6 +42,10 @@ export interface ArenaCardData {
 	// Draw WR
 	drawn: number;
 	drawnThenWin: number;
+	played: number;
+	playedThenWin: number;
+	playedOnCurve: number;
+	playedOnCurveThenWin: number;
 }
 
 export type TimePeriod = 'past-20' | 'past-7' | 'past-3' | 'current-season' | 'last-patch';

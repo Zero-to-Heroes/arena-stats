@@ -56,5 +56,9 @@ const mergeCardStat = (existing: ArenaCardData, incoming: ArenaCardData): ArenaC
 	base.inHandAfterMulliganThenWin += incoming.inHandAfterMulliganThenWin;
 	base.drawn += incoming.drawn;
 	base.drawnThenWin += incoming.drawnThenWin;
+	base.played += incoming.played;
+	base.playedThenWin += incoming.playedThenWin;
+	base.playedOnCurve += incoming.playedOnCurve;
+	base.playedOnCurveThenWin += incoming.playedOnCurveThenWin;
 	return base;
 };
