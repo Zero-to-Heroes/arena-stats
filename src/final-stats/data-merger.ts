@@ -41,14 +41,6 @@ export const aggregateCardStats = (dailyCardData: readonly ArenaCardStats[]): re
 };
 
 const aggregateCardStatsForContext = (dailyCardData: readonly ArenaCardStat[], context: string): ArenaCardStats => {
-	console.debug(
-		'aggregating cards for context',
-		context,
-		dailyCardData
-			.flatMap((d) => d.stats)
-			.map((s) => s.inStartingDeck)
-			.reduce((a, b) => a + b, 0),
-	);
 	const mergedStats: ArenaCardStat[] = mergeDailyCardData(dailyCardData, context);
 	const result: ArenaCardStats = {
 		lastUpdated: new Date(),
@@ -69,6 +61,8 @@ const mergeDailyCardData = (dailyCardData: readonly ArenaCardStat[], context: st
 				stats: {
 					inStartingDeck: 0,
 					wins: 0,
+					decksWithCard: 0,
+					decksWithCardThenWin: 0,
 					drawnBeforeMulligan: 0,
 					keptInMulligan: 0,
 					inHandAfterMulligan: 0,
@@ -84,6 +78,8 @@ const mergeDailyCardData = (dailyCardData: readonly ArenaCardStat[], context: st
 		}
 		result[cardStat.cardId].stats.inStartingDeck += cardStat.stats.inStartingDeck;
 		result[cardStat.cardId].stats.wins += cardStat.stats.wins;
+		result[cardStat.cardId].stats.decksWithCard += cardStat.stats.decksWithCard;
+		result[cardStat.cardId].stats.decksWithCardThenWin += cardStat.stats.decksWithCardThenWin;
 		result[cardStat.cardId].stats.drawnBeforeMulligan += cardStat.stats.drawnBeforeMulligan;
 		result[cardStat.cardId].stats.keptInMulligan += cardStat.stats.keptInMulligan;
 		result[cardStat.cardId].stats.inHandAfterMulligan += cardStat.stats.inHandAfterMulligan;

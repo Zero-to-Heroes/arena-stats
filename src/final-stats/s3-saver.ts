@@ -22,15 +22,6 @@ export const saveClassStats = async (classStats: readonly ArenaClassStat[], time
 
 export const saveCardStats = async (cardStats: readonly ArenaCardStats[], timePeriod: TimePeriod): Promise<void> => {
 	for (const stat of cardStats) {
-		console.debug(
-			'saving stat',
-			timePeriod,
-			stat.context,
-			stat.stats
-				.flatMap((s) => s.stats)
-				.map((s) => s.inStartingDeck)
-				.reduce((a, b) => a + b, 0),
-		);
 		const result: ArenaCardStats = {
 			lastUpdated: new Date(),
 			context: stat.context,

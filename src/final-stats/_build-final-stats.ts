@@ -32,28 +32,7 @@ export default async (event, context: Context): Promise<any> => {
 	await saveClassStats(aggregatedClassStats, timePeriod);
 
 	const dailyCardsData: readonly ArenaCardStats[] = await loadDailyDataCardFromS3(timePeriod, patchInfo);
-	console.debug(
-		'loaded daily card data',
-		timePeriod,
-		dailyCardsData?.length,
-		dailyCardsData
-			.flatMap((d) => d.stats)
-			.flatMap((s) => s.stats)
-			.map((s) => s.inStartingDeck)
-			.reduce((a, b) => a + b, 0),
-		dailyCardsData[0],
-	);
 	const aggregatedCardStats: readonly ArenaCardStats[] = aggregateCardStats(dailyCardsData);
-	console.debug(
-		'aggregated card stats',
-		timePeriod,
-		aggregatedCardStats?.length,
-		aggregatedCardStats
-			.flatMap((d) => d.stats)
-			.flatMap((s) => s.stats)
-			.map((s) => s.inStartingDeck)
-			.reduce((a, b) => a + b, 0),
-	);
 	await saveCardStats(aggregatedCardStats, timePeriod);
 
 	cleanup();

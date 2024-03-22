@@ -12,15 +12,22 @@ export const buildCardStats = (rows: readonly InternalArenaMatchStatsDbRow[]): r
 		}
 		const cardsAnalysis: readonly CardAnalysis[] = matchAnalysis.cardsAnalysis;
 		const playerClass = row.playerClass;
+		const cardsParsedForThisDeck: string[] = [];
 		for (let i = 0; i < cardsAnalysis.length; i++) {
 			const cardId = cardsAnalysis[i].cardId;
 			// const debug = cardId === 'WW_0700';
 			const cardGlobalContext = getCardContext(cards, cardId, 'global');
-			updateCardStats(cardGlobalContext, row.result, cardsAnalysis[i]);
+			updateCardStats(cardGlobalContext, row.result, cardsAnalysis[i], !cardsParsedForThisDeck.includes(cardId));
 			// debug && console.debug('updated', 'global', cardGlobalContext);
 			const cardPlayerClassContext = getCardContext(cards, cardId, playerClass);
-			updateCardStats(cardPlayerClassContext, row.result, cardsAnalysis[i]);
+			updateCardStats(
+				cardPlayerClassContext,
+				row.result,
+				cardsAnalysis[i],
+				!cardsParsedForThisDeck.includes(cardId),
+			);
 			// debug && console.debug('updated', playerClass, cardPlayerClassContext);
+			cardsParsedForThisDeck.push(cardId);
 		}
 	}
 	const result: ArenaCardStat[] = [];
@@ -38,9 +45,16 @@ export const buildCardStats = (rows: readonly InternalArenaMatchStatsDbRow[]): r
 	return result;
 };
 
-const updateCardStats = (cardContext: ArenaCardData, result: string, cardAnalysis: CardAnalysis) => {
+const updateCardStats = (
+	cardContext: ArenaCardData,
+	result: string,
+	cardAnalysis: CardAnalysis,
+	firstTimeInDeck: boolean,
+) => {
 	cardContext.inStartingDeck += 1;
 	cardContext.wins += result === 'won' ? 1 : 0;
+	cardContext.decksWithCard += firstTimeInDeck ? 1 : 0;
+	cardContext.decksWithCardThenWin += firstTimeInDeck && result === 'won' ? 1 : 0;
 	cardContext.drawnBeforeMulligan += cardAnalysis.drawnBeforeMulligan ? 1 : 0;
 	cardContext.keptInMulligan += cardAnalysis.drawnBeforeMulligan && cardAnalysis.mulligan ? 1 : 0;
 	cardContext.inHandAfterMulligan += cardAnalysis.mulligan ? 1 : 0;
@@ -65,6 +79,8 @@ const getCardContext = (
 		cards[cardId][context] = {
 			inStartingDeck: 0,
 			wins: 0,
+			decksWithCard: 0,
+			decksWithCardThenWin: 0,
 			drawnBeforeMulligan: 0,
 			keptInMulligan: 0,
 			inHandAfterMulligan: 0,

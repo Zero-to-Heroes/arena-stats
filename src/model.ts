@@ -33,6 +33,8 @@ export type PlayerClass = string;
 export interface ArenaCardData {
 	inStartingDeck: number;
 	wins: number;
+	decksWithCard: number;
+	decksWithCardThenWin: number;
 	// Kept%
 	drawnBeforeMulligan: number;
 	keptInMulligan: number;
