@@ -38,6 +38,7 @@ export const getFileKeysToLoad = (
 	type: 'classes' | 'cards',
 	timePeriod: TimePeriod,
 	patchInfo: PatchInfo,
+	currentSeasonPatchInfo: PatchInfo,
 ): readonly string[] => {
 	// We want to load:
 	// - the hourly data for the current day
@@ -46,9 +47,9 @@ export const getFileKeysToLoad = (
 	// for the patch day
 	const currentDayHourlyKeys = getHourlyKeysForCurrentDay(type);
 	// console.debug('currentDayHourlyKeys', currentDayHourlyKeys);
-	const previousDaysDailyKeys = getDailyKeysForPreviousDays(type, timePeriod, patchInfo);
+	const previousDaysDailyKeys = getDailyKeysForPreviousDays(type, timePeriod, patchInfo, currentSeasonPatchInfo);
 	// console.debug('previousDaysDailyKeys', previousDaysDailyKeys);
-	const patchDayHourlyKeys = getHourlyKeysForPatchDay(type, timePeriod, patchInfo);
+	const patchDayHourlyKeys = getHourlyKeysForPatchDay(type, timePeriod, patchInfo, currentSeasonPatchInfo);
 	// console.debug('patchDayHourlyKeys', patchDayHourlyKeys);
 	return [...currentDayHourlyKeys, ...previousDaysDailyKeys, ...patchDayHourlyKeys];
 };
@@ -74,8 +75,9 @@ const getDailyKeysForPreviousDays = (
 	type: 'classes' | 'cards',
 	timePeriod: TimePeriod,
 	patchInfo: PatchInfo,
+	currentSeasonPatchInfo: PatchInfo,
 ): readonly string[] => {
-	const firstDate = computeStartDate(timePeriod, patchInfo);
+	const firstDate = computeStartDate(timePeriod, patchInfo, currentSeasonPatchInfo);
 	const keys: string[] = [];
 	while (firstDate < new Date()) {
 		firstDate.setDate(firstDate.getDate() + 1);
@@ -85,7 +87,7 @@ const getDailyKeysForPreviousDays = (
 	return keys;
 };
 
-const computeStartDate = (timePeriod: TimePeriod, patchInfo: PatchInfo): Date => {
+const computeStartDate = (timePeriod: TimePeriod, patchInfo: PatchInfo, currentSeasonPatchInfo: PatchInfo): Date => {
 	const now = new Date();
 	now.setHours(0);
 	now.setMinutes(0);
@@ -109,9 +111,15 @@ const computeStartDate = (timePeriod: TimePeriod, patchInfo: PatchInfo): Date =>
 			twentyDaysAgo.setDate(twentyDaysAgo.getDate() - 20);
 			return twentyDaysAgo;
 		case 'current-season':
-			// Get the day of the start of the month
-			const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-			return startOfMonth;
+			// This one is a bit different, as we want to start at the day following the patch release
+			const currentSeasonPatchReleaseDate = new Date(currentSeasonPatchInfo.date);
+			const currentSeasonDayAfterPatchRelease = new Date(currentSeasonPatchReleaseDate);
+			currentSeasonDayAfterPatchRelease.setDate(currentSeasonDayAfterPatchRelease.getDate() + 1);
+			currentSeasonDayAfterPatchRelease.setHours(0);
+			currentSeasonDayAfterPatchRelease.setMinutes(0);
+			currentSeasonDayAfterPatchRelease.setSeconds(0);
+			currentSeasonDayAfterPatchRelease.setMilliseconds(0);
+			return currentSeasonDayAfterPatchRelease;
 		case 'last-patch':
 			// This one is a bit different, as we want to start at the day following the patch release
 			const patchReleaseDate = new Date(patchInfo.date);
@@ -129,12 +137,14 @@ const getHourlyKeysForPatchDay = (
 	type: 'classes' | 'cards',
 	timePeriod: TimePeriod,
 	patchInfo: PatchInfo,
+	currentSeasonPatchInfo: PatchInfo,
 ): readonly string[] => {
-	if (timePeriod !== 'last-patch') {
+	if (timePeriod !== 'last-patch' && timePeriod !== 'current-season') {
 		return [];
 	}
 
-	const patchDate = new Date(patchInfo.date);
+	const patch = timePeriod === 'last-patch' ? patchInfo : currentSeasonPatchInfo;
+	const patchDate = new Date(patch.date);
 	const keys: string[] = [];
 	// The keys should start at the hour following the patch release, up until 23:00 of that day
 	// E.g. if the patch was released at 2020-05-01 13:00, we want to load the data from
