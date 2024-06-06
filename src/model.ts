@@ -10,6 +10,13 @@ export interface ArenaClassStat {
 	totalGames: number;
 	totalsWins: number;
 	winsDistribution: WinsDistribution[];
+	matchups: ArenaClassMatchup[];
+}
+
+export interface ArenaClassMatchup {
+	opponentClass: string;
+	totalGames: number;
+	totalsWins: number;
 }
 
 export interface WinsDistribution {

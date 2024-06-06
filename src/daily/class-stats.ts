@@ -1,7 +1,7 @@
 import { S3 } from '@firestone-hs/aws-lambda-utils';
 import { ARENA_STATS_BUCKET } from '../common/config';
 import { buildFileKeys, buildFileNamesForGivenDay } from '../common/utils';
-import { ArenaClassStat, ArenaClassStats, WinsDistribution } from '../model';
+import { ArenaClassMatchup, ArenaClassStat, ArenaClassStats, WinsDistribution } from '../model';
 import { persistClassData } from './persist-data';
 
 export const handleClassStats = async (targetDate: string, s3: S3) => {
@@ -32,7 +32,7 @@ export const handleClassStats = async (targetDate: string, s3: S3) => {
 	await persistClassData(result, targetDate, s3);
 };
 
-const mergeClassStats = (allClassStats: readonly ArenaClassStat[]): readonly ArenaClassStat[] => {
+export const mergeClassStats = (allClassStats: readonly ArenaClassStat[]): readonly ArenaClassStat[] => {
 	const result: ArenaClassStat[] = [];
 	for (const stat of allClassStats) {
 		const existingStat = result.find((s) => s.playerClass === stat.playerClass);
@@ -42,9 +42,30 @@ const mergeClassStats = (allClassStats: readonly ArenaClassStat[]): readonly Are
 			existingStat.totalGames += stat.totalGames;
 			existingStat.totalsWins += stat.totalsWins;
 			existingStat.winsDistribution = mergeWinsDistribution(existingStat.winsDistribution, stat.winsDistribution);
+			existingStat.matchups = mergeMatchups(existingStat.matchups, stat.matchups);
 		}
 	}
 	return result;
+};
+
+const mergeMatchups = (
+	existing: readonly ArenaClassMatchup[],
+	incoming: readonly ArenaClassMatchup[],
+): ArenaClassMatchup[] => {
+	const result: { [opponentClass: string]: ArenaClassMatchup } = {};
+	for (const stat of existing) {
+		result[stat.opponentClass] = stat;
+	}
+	for (const stat of incoming) {
+		const existingStat = result[stat.opponentClass];
+		if (!existingStat) {
+			result[stat.opponentClass] = stat;
+		} else {
+			existingStat.totalGames += stat.totalGames;
+			existingStat.totalsWins += stat.totalsWins;
+		}
+	}
+	return Object.values(result);
 };
 
 const mergeWinsDistribution = (

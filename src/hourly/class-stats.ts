@@ -13,6 +13,7 @@ export const buildClassStats = (rows: readonly InternalArenaMatchStatsDbRow[]): 
 				totalGames: 0,
 				totalsWins: 0,
 				winsDistribution: [],
+				matchups: [],
 			};
 		}
 		const stat = stats[playerClass] as Mutable<ArenaClassStat>;
@@ -28,6 +29,19 @@ export const buildClassStats = (rows: readonly InternalArenaMatchStatsDbRow[]): 
 		} else {
 			winsDistribution.total++;
 		}
+
+		const opponentClass = row.opponentClass;
+		let matchup = stat.matchups.find((matchup) => matchup.opponentClass === opponentClass);
+		if (!matchup) {
+			matchup = {
+				opponentClass: opponentClass,
+				totalGames: 0,
+				totalsWins: 0,
+			};
+			stat.matchups.push(matchup);
+		}
+		matchup.totalGames++;
+		matchup.totalsWins += row.result === 'won' ? 1 : 0;
 	}
 	return Object.values(stats);
 };

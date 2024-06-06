@@ -4,6 +4,7 @@ import { ArenaCardStat, ArenaCardStats, ArenaClassStat, ArenaClassStats } from '
 
 export const aggregateClassStats = (dailyClassData: readonly ArenaClassStats[]): readonly ArenaClassStat[] => {
 	const result: { [playerClass: string]: ArenaClassStat } = {};
+	// TODO: probably should merge this and daily merge
 	for (const dailyData of dailyClassData) {
 		for (const classStat of dailyData.stats) {
 			if (!result[classStat.playerClass]) {
@@ -12,6 +13,7 @@ export const aggregateClassStats = (dailyClassData: readonly ArenaClassStats[]):
 					totalGames: 0,
 					totalsWins: 0,
 					winsDistribution: [],
+					matchups: [],
 				};
 			}
 			result[classStat.playerClass].totalGames += classStat.totalGames;
@@ -24,6 +26,17 @@ export const aggregateClassStats = (dailyClassData: readonly ArenaClassStats[]):
 					existingWinsDistribution.total += winsDistribution.total;
 				} else {
 					result[classStat.playerClass].winsDistribution.push(winsDistribution);
+				}
+			}
+			for (const matchup of classStat.matchups) {
+				const existingMatchup = result[classStat.playerClass].matchups.find(
+					(m) => m.opponentClass === matchup.opponentClass,
+				);
+				if (existingMatchup) {
+					existingMatchup.totalGames += matchup.totalGames;
+					existingMatchup.totalsWins += matchup.totalsWins;
+				} else {
+					result[classStat.playerClass].matchups.push(matchup);
 				}
 			}
 		}
