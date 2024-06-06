@@ -1,7 +1,7 @@
 import { S3 } from '@firestone-hs/aws-lambda-utils';
 import { ARENA_STATS_BUCKET } from '../common/config';
 import { buildFileKeys, buildFileNamesForGivenDay } from '../common/utils';
-import { ArenaCardData, ArenaCardStat, ArenaCardStats } from '../model';
+import { ArenaCardData, ArenaCardMatchup, ArenaCardStat, ArenaCardStats } from '../model';
 import { persistCardData } from './persist-data';
 
 export const handleCardStats = async (targetDate: string, s3: S3): Promise<void> => {
@@ -32,7 +32,10 @@ export const handleCardStats = async (targetDate: string, s3: S3): Promise<void>
 	await persistCardData(result, targetDate, s3);
 };
 
-const mergeCardStats = (allCardStats: readonly ArenaCardStat[]): readonly ArenaCardStat[] => {
+export const mergeCardStats = (
+	allCardStats: readonly ArenaCardStat[],
+	context: string = null,
+): readonly ArenaCardStat[] => {
 	// The key here is cardId + context
 	const result: { [cardIdAndContext: string]: ArenaCardStat } = {};
 	for (const stat of allCardStats) {
@@ -41,9 +44,36 @@ const mergeCardStats = (allCardStats: readonly ArenaCardStat[]): readonly ArenaC
 			result[stat.cardId + stat.context] = stat;
 		} else {
 			existingStat.stats = mergeCardStat(existingStat.stats, stat.stats);
+			existingStat.matchups = mergeCardStatMatchups(existingStat.matchups, stat.matchups);
+		}
+		result[stat.cardId + stat.context].context = context;
+	}
+	return Object.values(result);
+};
+
+const mergeCardStatMatchups = (
+	existing: readonly ArenaCardMatchup[],
+	incoming: readonly ArenaCardMatchup[],
+): readonly ArenaCardMatchup[] => {
+	const result: { [opponentClass: string]: ArenaCardMatchup } = {};
+	for (const stat of existing) {
+		result[stat.opponentClass] = stat;
+	}
+	for (const stat of incoming) {
+		const existingStat = result[stat.opponentClass];
+		if (!existingStat) {
+			result[stat.opponentClass] = stat;
+		} else {
+			result[stat.opponentClass] = mergeCardStatMatchup(existingStat, stat);
 		}
 	}
 	return Object.values(result);
+};
+
+const mergeCardStatMatchup = (existing: ArenaCardMatchup, incoming: ArenaCardMatchup): ArenaCardMatchup => {
+	const base: ArenaCardMatchup = { ...existing };
+	base.stats = mergeCardStat(existing.stats, incoming.stats);
+	return base;
 };
 
 const mergeCardStat = (existing: ArenaCardData, incoming: ArenaCardData): ArenaCardData => {

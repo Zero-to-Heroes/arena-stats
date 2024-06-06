@@ -1,4 +1,5 @@
-import { ALL_CLASSES } from '@firestone-hs/reference-data';
+import { mergeCardStats } from '../daily/card-stats';
+import { allClasses } from '../misc-utils';
 import { ArenaCardStat, ArenaCardStats, ArenaClassStat, ArenaClassStats } from '../model';
 
 export const aggregateClassStats = (dailyClassData: readonly ArenaClassStats[]): readonly ArenaClassStat[] => {
@@ -31,7 +32,7 @@ export const aggregateClassStats = (dailyClassData: readonly ArenaClassStats[]):
 };
 
 export const aggregateCardStats = (dailyCardData: readonly ArenaCardStats[]): readonly ArenaCardStats[] => {
-	const contexts = ['global', ...ALL_CLASSES];
+	const contexts = ['global', ...allClasses];
 	return contexts.map((context) =>
 		aggregateCardStatsForContext(
 			dailyCardData.flatMap((d) => d.stats).filter((d) => d.context === context),
@@ -41,7 +42,8 @@ export const aggregateCardStats = (dailyCardData: readonly ArenaCardStats[]): re
 };
 
 const aggregateCardStatsForContext = (dailyCardData: readonly ArenaCardStat[], context: string): ArenaCardStats => {
-	const mergedStats: ArenaCardStat[] = mergeDailyCardData(dailyCardData, context);
+	// const mergedStats: ArenaCardStat[] = mergeDailyCardData(dailyCardData, context);
+	const mergedStats: readonly ArenaCardStat[] = mergeCardStats(dailyCardData, context);
 	const result: ArenaCardStats = {
 		lastUpdated: new Date(),
 		context: context,
@@ -50,46 +52,33 @@ const aggregateCardStatsForContext = (dailyCardData: readonly ArenaCardStat[], c
 	return result;
 };
 
-const mergeDailyCardData = (dailyCardData: readonly ArenaCardStat[], context: string): ArenaCardStat[] => {
-	const result: { [cardId: string]: ArenaCardStat } = {};
-	console.debug('merging daily card data', dailyCardData.length);
-	for (const cardStat of dailyCardData) {
-		if (!result[cardStat.cardId]) {
-			result[cardStat.cardId] = {
-				cardId: cardStat.cardId,
-				context: context,
-				stats: {
-					inStartingDeck: 0,
-					wins: 0,
-					decksWithCard: 0,
-					decksWithCardThenWin: 0,
-					drawnBeforeMulligan: 0,
-					keptInMulligan: 0,
-					inHandAfterMulligan: 0,
-					inHandAfterMulliganThenWin: 0,
-					drawn: 0,
-					drawnThenWin: 0,
-					played: 0,
-					playedThenWin: 0,
-					playedOnCurve: 0,
-					playedOnCurveThenWin: 0,
-				},
-			};
-		}
-		result[cardStat.cardId].stats.inStartingDeck += cardStat.stats.inStartingDeck;
-		result[cardStat.cardId].stats.wins += cardStat.stats.wins;
-		result[cardStat.cardId].stats.decksWithCard += cardStat.stats.decksWithCard;
-		result[cardStat.cardId].stats.decksWithCardThenWin += cardStat.stats.decksWithCardThenWin;
-		result[cardStat.cardId].stats.drawnBeforeMulligan += cardStat.stats.drawnBeforeMulligan;
-		result[cardStat.cardId].stats.keptInMulligan += cardStat.stats.keptInMulligan;
-		result[cardStat.cardId].stats.inHandAfterMulligan += cardStat.stats.inHandAfterMulligan;
-		result[cardStat.cardId].stats.inHandAfterMulliganThenWin += cardStat.stats.inHandAfterMulliganThenWin;
-		result[cardStat.cardId].stats.drawn += cardStat.stats.drawn;
-		result[cardStat.cardId].stats.drawnThenWin += cardStat.stats.drawnThenWin;
-		result[cardStat.cardId].stats.played += cardStat.stats.played;
-		result[cardStat.cardId].stats.playedThenWin += cardStat.stats.playedThenWin;
-		result[cardStat.cardId].stats.playedOnCurve += cardStat.stats.playedOnCurve;
-		result[cardStat.cardId].stats.playedOnCurveThenWin += cardStat.stats.playedOnCurveThenWin;
-	}
-	return Object.values(result);
-};
+// const mergeDailyCardData = (dailyCardData: readonly ArenaCardStat[], context: string): ArenaCardStat[] => {
+// 	const result: { [cardId: string]: ArenaCardStat } = {};
+// 	console.debug('merging daily card data', dailyCardData.length);
+// 	for (const cardStat of dailyCardData) {
+// 		if (!result[cardStat.cardId]) {
+// 			const matchups = buildEmptyMatchups();
+// 			result[cardStat.cardId] = {
+// 				cardId: cardStat.cardId,
+// 				context: context,
+// 				stats: buildEmptyStats(),
+// 				matchups: Object.values(matchups), // TODO
+// 			};
+// 		}
+// 		result[cardStat.cardId].stats.inStartingDeck += cardStat.stats.inStartingDeck;
+// 		result[cardStat.cardId].stats.wins += cardStat.stats.wins;
+// 		result[cardStat.cardId].stats.decksWithCard += cardStat.stats.decksWithCard;
+// 		result[cardStat.cardId].stats.decksWithCardThenWin += cardStat.stats.decksWithCardThenWin;
+// 		result[cardStat.cardId].stats.drawnBeforeMulligan += cardStat.stats.drawnBeforeMulligan;
+// 		result[cardStat.cardId].stats.keptInMulligan += cardStat.stats.keptInMulligan;
+// 		result[cardStat.cardId].stats.inHandAfterMulligan += cardStat.stats.inHandAfterMulligan;
+// 		result[cardStat.cardId].stats.inHandAfterMulliganThenWin += cardStat.stats.inHandAfterMulliganThenWin;
+// 		result[cardStat.cardId].stats.drawn += cardStat.stats.drawn;
+// 		result[cardStat.cardId].stats.drawnThenWin += cardStat.stats.drawnThenWin;
+// 		result[cardStat.cardId].stats.played += cardStat.stats.played;
+// 		result[cardStat.cardId].stats.playedThenWin += cardStat.stats.playedThenWin;
+// 		result[cardStat.cardId].stats.playedOnCurve += cardStat.stats.playedOnCurve;
+// 		result[cardStat.cardId].stats.playedOnCurveThenWin += cardStat.stats.playedOnCurveThenWin;
+// 	}
+// 	return Object.values(result);
+// };

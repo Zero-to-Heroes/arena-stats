@@ -22,14 +22,15 @@ const lambda = new AWS.Lambda();
 
 // [1]: https://aws.amazon.com/blogs/compute/node-js-8-10-runtime-now-available-in-aws-lambda/
 export default async (event, context: Context): Promise<any> => {
+	const cleanup = logBeforeTimeout(context);
 	await allCards.initializeCardsDb();
 
 	if (!event.timePeriod) {
 		await dispatchEvents(context);
+		cleanup();
 		return;
 	}
 
-	const cleanup = logBeforeTimeout(context);
 	const timePeriod: TimePeriod = event.timePeriod;
 	const patchInfo = await getLastArenaPatch();
 	const currentSeasonPatchInfo = await getArenaCurrentSeasonPatch();

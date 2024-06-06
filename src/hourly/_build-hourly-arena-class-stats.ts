@@ -22,6 +22,7 @@ export default async (event, context: Context): Promise<any> => {
 
 	if (event.catchUp) {
 		await dispatchCatchUpEvents(context, +event.catchUp);
+		cleanup();
 		return;
 	}
 

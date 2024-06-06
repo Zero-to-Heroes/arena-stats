@@ -20,14 +20,21 @@ export interface WinsDistribution {
 export interface ArenaCardStats {
 	lastUpdated: Date;
 	context: 'global' | PlayerClass;
-	stats: ArenaCardStat[];
+	stats: readonly ArenaCardStat[];
 }
 
 export interface ArenaCardStat {
 	cardId: string;
 	context: 'global' | PlayerClass;
 	stats: ArenaCardData;
+	matchups: readonly ArenaCardMatchup[];
 }
+
+export interface ArenaCardMatchup {
+	opponentClass: string;
+	stats: ArenaCardData;
+}
+
 export type PlayerClass = string;
 
 export interface ArenaCardData {

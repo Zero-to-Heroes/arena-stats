@@ -44,7 +44,7 @@ const performRowsProcessing = async (
 ): Promise<readonly InternalArenaMatchStatsDbRow[]> => {
 	return new Promise<readonly InternalArenaMatchStatsDbRow[]>((resolve) => {
 		const queryStr = `
-			SELECT id, playerClass, result, wins, losses, playerDecklist, matchAnalysis
+			SELECT id, playerClass, opponentClass, result, wins, losses, playerDecklist, matchAnalysis
 			FROM arena_match_stats
 			WHERE creationDate >= ?
 			AND creationDate < ?
@@ -58,7 +58,7 @@ const performRowsProcessing = async (
 				console.error('error while fetching rows', err);
 			})
 			.on('fields', (fields) => {
-				console.log('fields', fields);
+				// console.log('fields', fields);
 			})
 			.on('result', async (row: InternalArenaMatchStatsDbRow) => {
 				rowsToProcess.push(row);

@@ -1,5 +1,6 @@
 export interface InternalArenaMatchStatsDbRow {
 	readonly playerClass: string;
+	readonly opponentClass: string;
 	readonly result: 'won' | 'lost' | 'tied';
 	readonly wins: number;
 	readonly losses: number;

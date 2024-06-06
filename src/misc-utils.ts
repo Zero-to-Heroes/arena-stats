@@ -1,3 +1,8 @@
+import { ALL_CLASSES } from '@firestone-hs/reference-data';
+
+// In case some "neutral" hero comes up
+export const allClasses = [...ALL_CLASSES, 'neutral'];
+
 // The date of the day before, in YYYY-MM-dd format
 export const yesterdayDate = () => {
 	const now = new Date();
