@@ -19,11 +19,11 @@ export const handleCardStats = async (targetDate: string, s3: S3): Promise<void>
 	}
 
 	const allCardStats: readonly ArenaCardStat[] = hourlyData.flatMap((data) => data.stats);
-	const mergedClassStats: readonly ArenaCardStat[] = mergeCardStats(allCardStats);
+	const mergedCardStats: readonly ArenaCardStat[] = mergeCardStats(allCardStats);
 	const result: ArenaCardStats = {
 		lastUpdated: new Date(),
 		context: null,
-		stats: [...mergedClassStats],
+		stats: [...mergedCardStats],
 	};
 
 	// targetDate + 1 day
@@ -32,21 +32,19 @@ export const handleCardStats = async (targetDate: string, s3: S3): Promise<void>
 	await persistCardData(result, targetDate, s3);
 };
 
-export const mergeCardStats = (
-	allCardStats: readonly ArenaCardStat[],
-	context: string = null,
-): readonly ArenaCardStat[] => {
+export const mergeCardStats = (allCardStats: readonly ArenaCardStat[]): readonly ArenaCardStat[] => {
 	// The key here is cardId + context
 	const result: { [cardIdAndContext: string]: ArenaCardStat } = {};
 	for (const stat of allCardStats) {
-		const existingStat = result[stat.cardId + stat.context];
+		const cardIdAndContext = stat.cardId + stat.context;
+		const existingStat = result[cardIdAndContext];
 		if (!existingStat) {
-			result[stat.cardId + stat.context] = stat;
+			result[cardIdAndContext] = stat;
 		} else {
 			existingStat.stats = mergeCardStat(existingStat.stats, stat.stats);
 			existingStat.matchups = mergeCardStatMatchups(existingStat.matchups, stat.matchups);
 		}
-		result[stat.cardId + stat.context].context = context;
+		// result[cardIdAndContext].context = context;
 	}
 	return Object.values(result);
 };

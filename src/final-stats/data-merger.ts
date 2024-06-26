@@ -56,7 +56,7 @@ export const aggregateCardStats = (dailyCardData: readonly ArenaCardStats[]): re
 
 const aggregateCardStatsForContext = (dailyCardData: readonly ArenaCardStat[], context: string): ArenaCardStats => {
 	// const mergedStats: ArenaCardStat[] = mergeDailyCardData(dailyCardData, context);
-	const mergedStats: readonly ArenaCardStat[] = mergeCardStats(dailyCardData, context);
+	const mergedStats: readonly ArenaCardStat[] = mergeCardStats(dailyCardData);
 	const result: ArenaCardStats = {
 		lastUpdated: new Date(),
 		context: context,
