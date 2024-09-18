@@ -4,11 +4,12 @@ import { ArenaCardStats, ArenaClassStat, ArenaClassStats, TimePeriod } from '../
 import { s3 } from './_build-final-stats';
 
 export const saveClassStats = async (classStats: readonly ArenaClassStat[], timePeriod: TimePeriod): Promise<void> => {
+	const filtered = classStats.filter((stat) => !!stat.playerClass?.length);
 	const result: ArenaClassStats = {
 		lastUpdated: new Date(),
 		timePeriod: timePeriod,
-		dataPoints: classStats.map((d) => d.totalGames).reduce((a, b) => a + b, 0),
-		stats: [...classStats],
+		dataPoints: filtered.map((d) => d.totalGames).reduce((a, b) => a + b, 0),
+		stats: filtered,
 	};
 	const gzippedMinResult = gzipSync(JSON.stringify(result));
 	await s3.writeFile(
