@@ -66,7 +66,7 @@ Resources:
             Runtime: nodejs18.x
             Timeout: 880
             CodeUri: ./dist/final-stats/_build-final-stats
-            MemorySize: 5000
+            MemorySize: 8000
             ReservedConcurrentExecutions: 5
             # Layers:
             #     - !Sub "arn:aws:lambda:${AWS::Region}:580247275435:layer:LambdaInsightsExtension:14"
