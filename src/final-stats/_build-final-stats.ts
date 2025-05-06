@@ -2,13 +2,13 @@
 // the more traditional callback-style handler.
 
 import {
-	S3,
 	getArenaCurrentSeasonPatch,
 	getLastArenaPatch,
 	logBeforeTimeout,
+	S3,
 	sleep,
 } from '@firestone-hs/aws-lambda-utils';
-import { AllCardsService } from '@firestone-hs/reference-data';
+import { AllCardsService, arenaSets, SetId } from '@firestone-hs/reference-data';
 import { Context } from 'aws-lambda';
 import AWS from 'aws-sdk';
 import { ArenaCardStats, ArenaClassStat, ArenaClassStats, TimePeriod } from '../model';
@@ -48,8 +48,21 @@ export default async (event, context: Context): Promise<any> => {
 		patchInfo,
 		currentSeasonPatchInfo,
 	);
+	const validArenaSets: readonly SetId[] = arenaSets;
 	const aggregatedCardStats: readonly ArenaCardStats[] = aggregateCardStats(dailyCardsData);
-	await saveCardStats(aggregatedCardStats, timePeriod);
+	const filteredCardStats: readonly ArenaCardStats[] = aggregatedCardStats.map((s) => ({
+		...s,
+		stats: s.stats.filter((cardStat) => {
+			const card = allCards.getCard(cardStat.cardId);
+			return card && validArenaSets.includes(card.set?.toLowerCase() as SetId);
+		}),
+	}));
+	console.debug(
+		'filteredCardStats',
+		filteredCardStats.flatMap((s) => s.stats.length).reduce((a, b) => a + b, 0),
+		aggregatedCardStats.flatMap((s) => s.stats.length).reduce((a, b) => a + b, 0),
+	);
+	await saveCardStats(filteredCardStats, timePeriod);
 
 	cleanup();
 	return { statusCode: 200, body: null };
