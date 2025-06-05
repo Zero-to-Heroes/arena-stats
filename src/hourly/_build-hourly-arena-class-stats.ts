@@ -26,16 +26,33 @@ export default async (event, context: Context): Promise<any> => {
 		return;
 	}
 
+	if (!event.gameMode) {
+		await dispatchAllEvents(context, event);
+		cleanup();
+		return;
+	}
+
 	const processStartDate = buildProcessStartDate(event);
 	const processEndDate = new Date(processStartDate);
 	processEndDate.setHours(processEndDate.getHours() + 1);
+	const gameMode: 'arena' | 'arena-underground' = event.gameMode;
 
-	const rows: readonly InternalArenaMatchStatsDbRow[] = await loadRows(processStartDate, processEndDate);
+	const rows: readonly InternalArenaMatchStatsDbRow[] = await loadRows(gameMode, processStartDate, processEndDate);
+	console.debug(
+		'Loaded rows',
+		rows.length,
+		'for game mode',
+		gameMode,
+		'between',
+		processStartDate,
+		'and',
+		processEndDate,
+	);
 	const classStats = buildClassStats(rows);
 	const cardStats = buildCardStats(rows);
 
-	await saveClassStats(classStats, processStartDate, s3);
-	await saveCardStats(cardStats, processStartDate, s3);
+	await saveClassStats(classStats, gameMode, processStartDate, s3);
+	await saveCardStats(cardStats, gameMode, processStartDate, s3);
 
 	cleanup();
 	return { statusCode: 200, body: null };
@@ -54,6 +71,27 @@ const buildProcessStartDate = (event): Date => {
 	processStartDate.setSeconds(0);
 	processStartDate.setMilliseconds(0);
 	return processStartDate;
+};
+
+const dispatchAllEvents = async (context: Context, event) => {
+	const gameModes = ['arena', 'arena-underground'];
+	for (const gameMode of gameModes) {
+		console.log('dispatching event for game mode', gameMode, event.targetDate);
+		const newEvent = {
+			gameMode: gameMode,
+			targetDate: event.targetDate,
+		};
+		const params = {
+			FunctionName: context.functionName,
+			InvocationType: 'Event',
+			LogType: 'Tail',
+			Payload: JSON.stringify(newEvent),
+		};
+		// console.log('\tinvoking lambda', params);
+		const result = await lambda.invoke(params).promise();
+		// console.log('\tinvocation result', result);
+		await sleep(50);
+	}
 };
 
 const dispatchCatchUpEvents = async (context: Context, daysInThePast: number) => {

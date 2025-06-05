@@ -6,11 +6,12 @@ import { ArenaCardStats, ArenaClassStats, TimePeriod } from '../model';
 import { s3 } from './_build-final-stats';
 
 export const loadDailyDataClassFromS3 = async (
+	gameMode: 'arena' | 'arena-underground' | 'all',
 	timePeriod: TimePeriod,
 	patchInfo: PatchInfo,
 	currentSeasonPatchInfo: PatchInfo,
 ): Promise<readonly ArenaClassStats[]> => {
-	const fileKeys = getFileKeysToLoad('classes', timePeriod, patchInfo, currentSeasonPatchInfo);
+	const fileKeys = getFileKeysToLoad('classes', gameMode, timePeriod, patchInfo, currentSeasonPatchInfo);
 	const rawData: readonly string[] = await Promise.all(
 		fileKeys.map((fileKey) => s3.readGzipContent(ARENA_STATS_BUCKET, fileKey, 1, false, 300)),
 	);
@@ -19,11 +20,12 @@ export const loadDailyDataClassFromS3 = async (
 };
 
 export const loadDailyDataCardFromS3 = async (
+	gameMode: 'arena' | 'arena-underground' | 'all',
 	timePeriod: TimePeriod,
 	patchInfo: PatchInfo,
 	currentSeasonPatchInfo: PatchInfo,
 ): Promise<readonly ArenaCardStats[]> => {
-	const fileKeys = getFileKeysToLoad('cards', timePeriod, patchInfo, currentSeasonPatchInfo);
+	const fileKeys = getFileKeysToLoad('cards', gameMode, timePeriod, patchInfo, currentSeasonPatchInfo);
 	const rawData: readonly string[] = await Promise.all(
 		fileKeys.map((fileKey) => s3.readGzipContent(ARENA_STATS_BUCKET, fileKey, 1, false, 300)),
 	);

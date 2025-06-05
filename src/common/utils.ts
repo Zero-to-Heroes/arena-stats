@@ -25,36 +25,53 @@ export const buildFileNamesForGivenDay = (targetDate: string): readonly string[]
 
 export const buildFileKeys = (
 	granularity: 'hourly' | 'daily',
+	gameMode: 'arena' | 'arena-underground',
 	type: 'classes' | 'cards',
 	fileNames: readonly string[],
 ): readonly string[] => {
 	const fileKeys: readonly string[] = fileNames.map(
-		(fileName) => `${ARENA_STATS_KEY_PREFIX}/${type}/${granularity}/${fileName}.gz.json`,
+		(fileName) => `${ARENA_STATS_KEY_PREFIX}/${type}/${gameMode}/${granularity}/${fileName}.gz.json`,
 	);
 	return fileKeys;
 };
 
 export const getFileKeysToLoad = (
 	type: 'classes' | 'cards',
+	gameMode: 'arena' | 'arena-underground' | 'all',
 	timePeriod: TimePeriod,
 	patchInfo: PatchInfo,
 	currentSeasonPatchInfo: PatchInfo,
 ): readonly string[] => {
+	if (gameMode === 'all') {
+		return [
+			...getFileKeysToLoad(type, 'arena', timePeriod, patchInfo, currentSeasonPatchInfo),
+			...getFileKeysToLoad(type, 'arena-underground', timePeriod, patchInfo, currentSeasonPatchInfo),
+		];
+	}
 	// We want to load:
 	// - the hourly data for the current day
 	// - the daily data for the previous days
 	// - if we're looking at the "last-patch" filter, we load the correct hourly data
 	// for the patch day
-	const currentDayHourlyKeys = getHourlyKeysForCurrentDay(type);
+	const currentDayHourlyKeys = getHourlyKeysForCurrentDay(gameMode, type);
 	// console.debug('currentDayHourlyKeys', currentDayHourlyKeys);
-	const previousDaysDailyKeys = getDailyKeysForPreviousDays(type, timePeriod, patchInfo, currentSeasonPatchInfo);
+	const previousDaysDailyKeys = getDailyKeysForPreviousDays(
+		gameMode,
+		type,
+		timePeriod,
+		patchInfo,
+		currentSeasonPatchInfo,
+	);
 	// console.debug('previousDaysDailyKeys', previousDaysDailyKeys);
-	const patchDayHourlyKeys = getHourlyKeysForPatchDay(type, timePeriod, patchInfo, currentSeasonPatchInfo);
+	const patchDayHourlyKeys = getHourlyKeysForPatchDay(gameMode, type, timePeriod, patchInfo, currentSeasonPatchInfo);
 	// console.debug('patchDayHourlyKeys', patchDayHourlyKeys);
 	return [...currentDayHourlyKeys, ...previousDaysDailyKeys, ...patchDayHourlyKeys];
 };
 
-const getHourlyKeysForCurrentDay = (type: 'classes' | 'cards'): readonly string[] => {
+const getHourlyKeysForCurrentDay = (
+	gameMode: 'arena' | 'arena-underground',
+	type: 'classes' | 'cards',
+): readonly string[] => {
 	// Start with the current hour (at 00:00.000), and go back in time
 	// until we get to 00:00 00:00.000 of the current day
 	const now = new Date();
@@ -66,12 +83,13 @@ const getHourlyKeysForCurrentDay = (type: 'classes' | 'cards'): readonly string[
 		date.setMilliseconds(0);
 		// The date in the format YYYY-MM-ddTHH:mm:ss.sssZ
 		const dateStr = date.toISOString();
-		keys.push(`${ARENA_STATS_KEY_PREFIX}/${type}/hourly/${dateStr}.gz.json`);
+		keys.push(`${ARENA_STATS_KEY_PREFIX}/${type}/${gameMode}/hourly/${dateStr}.gz.json`);
 	}
 	return keys;
 };
 
 const getDailyKeysForPreviousDays = (
+	gameMode: 'arena' | 'arena-underground',
 	type: 'classes' | 'cards',
 	timePeriod: TimePeriod,
 	patchInfo: PatchInfo,
@@ -80,9 +98,9 @@ const getDailyKeysForPreviousDays = (
 	const firstDate = computeStartDate(timePeriod, patchInfo, currentSeasonPatchInfo);
 	const keys: string[] = [];
 	while (firstDate < new Date()) {
-		firstDate.setDate(firstDate.getDate() + 1);
 		const dateStr = firstDate.toISOString();
-		keys.push(`${ARENA_STATS_KEY_PREFIX}/${type}/daily/${dateStr}.gz.json`);
+		keys.push(`${ARENA_STATS_KEY_PREFIX}/${type}/${gameMode}/daily/${dateStr}.gz.json`);
+		firstDate.setDate(firstDate.getDate() + 1);
 	}
 	return keys;
 };
@@ -134,6 +152,7 @@ const computeStartDate = (timePeriod: TimePeriod, patchInfo: PatchInfo, currentS
 };
 
 const getHourlyKeysForPatchDay = (
+	gameMode: 'arena' | 'arena-underground',
 	type: 'classes' | 'cards',
 	timePeriod: TimePeriod,
 	patchInfo: PatchInfo,
@@ -158,7 +177,7 @@ const getHourlyKeysForPatchDay = (
 		date.setMilliseconds(0);
 		// The date in the format YYYY-MM-ddTHH:mm:ss.sssZ
 		const dateStr = date.toISOString();
-		keys.push(`${ARENA_STATS_KEY_PREFIX}/${type}/hourly/${dateStr}.gz.json`);
+		keys.push(`${ARENA_STATS_KEY_PREFIX}/${type}/${gameMode}/hourly/${dateStr}.gz.json`);
 	}
 	return keys;
 };

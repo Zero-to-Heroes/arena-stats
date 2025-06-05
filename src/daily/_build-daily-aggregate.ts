@@ -24,12 +24,40 @@ export default async (event, context: Context): Promise<any> => {
 		return;
 	}
 
+	if (!event.gameMode) {
+		await dispatchAllEvents(context, event);
+		cleanup();
+		return;
+	}
+
 	const targetDate: string = event.targetDate || yesterdayDate();
-	await handleClassStats(targetDate, s3);
-	await handleCardStats(targetDate, s3);
+	const gameMode: 'arena' | 'arena-underground' = event.gameMode;
+	await handleClassStats(gameMode, targetDate, s3);
+	await handleCardStats(gameMode, targetDate, s3);
 
 	cleanup();
 	return { statusCode: 200, body: null };
+};
+
+const dispatchAllEvents = async (context: Context, event) => {
+	const gameModes = ['arena', 'arena-underground'];
+	for (const gameMode of gameModes) {
+		console.log('dispatching event for game mode', gameMode);
+		const newEvent = {
+			gameMode: gameMode,
+			targetDate: event.targetDate,
+		};
+		const params = {
+			FunctionName: context.functionName,
+			InvocationType: 'Event',
+			LogType: 'Tail',
+			Payload: JSON.stringify(newEvent),
+		};
+		// console.log('\tinvoking lambda', params);
+		const result = await lambda.invoke(params).promise();
+		// console.log('\tinvocation result', result);
+		await sleep(50);
+	}
 };
 
 const dispatchCatchUpEvents = async (context: Context, numberOfDays: number) => {

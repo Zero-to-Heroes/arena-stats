@@ -4,9 +4,9 @@ import { buildFileKeys, buildFileNamesForGivenDay } from '../common/utils';
 import { ArenaClassMatchup, ArenaClassStat, ArenaClassStats, WinsDistribution } from '../model';
 import { persistClassData } from './persist-data';
 
-export const handleClassStats = async (targetDate: string, s3: S3) => {
+export const handleClassStats = async (gameMode: 'arena' | 'arena-underground', targetDate: string, s3: S3) => {
 	const fileNames = buildFileNamesForGivenDay(targetDate);
-	const fileKeys = buildFileKeys('hourly', 'classes', fileNames);
+	const fileKeys = buildFileKeys('hourly', gameMode, 'classes', fileNames);
 	const hourlyRawData: readonly string[] = await Promise.all(
 		fileKeys.map((fileKey) => s3.readGzipContent(ARENA_STATS_BUCKET, fileKey, 1, false, 300)),
 	);
@@ -29,7 +29,7 @@ export const handleClassStats = async (targetDate: string, s3: S3) => {
 		dataPoints: mergedClassStats.map((d) => d.totalGames).reduce((a, b) => a + b, 0),
 		stats: [...mergedClassStats],
 	};
-	await persistClassData(result, targetDate, s3);
+	await persistClassData(result, gameMode, targetDate, s3);
 };
 
 export const mergeClassStats = (allClassStats: readonly ArenaClassStat[]): readonly ArenaClassStat[] => {

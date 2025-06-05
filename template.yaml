@@ -13,7 +13,7 @@ Resources:
             Timeout: 880
             CodeUri: ./dist/hourly/_build-hourly-arena-class-stats
             MemorySize: 2000
-            ReservedConcurrentExecutions: 5
+            ReservedConcurrentExecutions: 1
             # Layers:
             #     - !Sub "arn:aws:lambda:${AWS::Region}:580247275435:layer:LambdaInsightsExtension:14"
             Policies:

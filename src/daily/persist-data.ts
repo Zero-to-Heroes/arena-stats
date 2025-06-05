@@ -3,7 +3,12 @@ import { gzipSync } from 'zlib';
 import { ARENA_STATS_BUCKET, ARENA_STATS_KEY_PREFIX } from '../common/config';
 import { ArenaCardStats, ArenaClassStats } from '../model';
 
-export const persistClassData = async (data: ArenaClassStats, targetDateStr: string, s3: S3) => {
+export const persistClassData = async (
+	data: ArenaClassStats,
+	gameMode: 'arena' | 'arena-underground',
+	targetDateStr: string,
+	s3: S3,
+) => {
 	const targetDate = new Date(targetDateStr);
 	targetDate.setHours(0);
 	targetDate.setMinutes(0);
@@ -13,11 +18,16 @@ export const persistClassData = async (data: ArenaClassStats, targetDateStr: str
 	const startDate = targetDate.toISOString();
 
 	const gzippedMinResult = gzipSync(JSON.stringify(data));
-	const destination = `${ARENA_STATS_KEY_PREFIX}/classes/daily/${startDate}.gz.json`;
+	const destination = `${ARENA_STATS_KEY_PREFIX}/classes/${gameMode}/daily/${startDate}.gz.json`;
 	await s3.writeFile(gzippedMinResult, ARENA_STATS_BUCKET, destination, 'application/json', 'gzip');
 };
 
-export const persistCardData = async (data: ArenaCardStats, targetDateStr: string, s3: S3) => {
+export const persistCardData = async (
+	data: ArenaCardStats,
+	gameMode: 'arena' | 'arena-underground',
+	targetDateStr: string,
+	s3: S3,
+) => {
 	const targetDate = new Date(targetDateStr);
 	targetDate.setHours(0);
 	targetDate.setMinutes(0);
@@ -27,6 +37,6 @@ export const persistCardData = async (data: ArenaCardStats, targetDateStr: strin
 	const startDate = targetDate.toISOString();
 
 	const gzippedMinResult = gzipSync(JSON.stringify(data));
-	const destination = `${ARENA_STATS_KEY_PREFIX}/cards/daily/${startDate}.gz.json`;
+	const destination = `${ARENA_STATS_KEY_PREFIX}/cards/${gameMode}/daily/${startDate}.gz.json`;
 	await s3.writeFile(gzippedMinResult, ARENA_STATS_BUCKET, destination, 'application/json', 'gzip');
 };

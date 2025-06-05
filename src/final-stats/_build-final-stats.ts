@@ -8,7 +8,7 @@ import {
 	S3,
 	sleep,
 } from '@firestone-hs/aws-lambda-utils';
-import { AllCardsService, arenaSets, SetId } from '@firestone-hs/reference-data';
+import { AllCardsService } from '@firestone-hs/reference-data';
 import { Context } from 'aws-lambda';
 import AWS from 'aws-sdk';
 import { ArenaCardStats, ArenaClassStat, ArenaClassStats, TimePeriod } from '../model';
@@ -32,37 +32,40 @@ export default async (event, context: Context): Promise<any> => {
 	}
 
 	const timePeriod: TimePeriod = event.timePeriod;
+	const gameMode: 'arena' | 'arena-underground' | 'all' = event.gameMode;
 	const patchInfo = await getLastArenaPatch();
 	const currentSeasonPatchInfo = await getArenaCurrentSeasonPatch();
 
 	const dailyClassData: readonly ArenaClassStats[] = await loadDailyDataClassFromS3(
+		gameMode,
 		timePeriod,
 		patchInfo,
 		currentSeasonPatchInfo,
 	);
 	const aggregatedClassStats: readonly ArenaClassStat[] = aggregateClassStats(dailyClassData);
-	await saveClassStats(aggregatedClassStats, timePeriod);
+	await saveClassStats(aggregatedClassStats, gameMode, timePeriod);
 
 	const dailyCardsData: readonly ArenaCardStats[] = await loadDailyDataCardFromS3(
+		gameMode,
 		timePeriod,
 		patchInfo,
 		currentSeasonPatchInfo,
 	);
-	const validArenaSets: readonly SetId[] = arenaSets;
+	// const validArenaSets: readonly SetId[] = arenaSets;
 	const aggregatedCardStats: readonly ArenaCardStats[] = aggregateCardStats(dailyCardsData);
 	const filteredCardStats: readonly ArenaCardStats[] = aggregatedCardStats.map((s) => ({
 		...s,
-		stats: s.stats.filter((cardStat) => {
-			const card = allCards.getCard(cardStat.cardId);
-			return card && validArenaSets.includes(card.set?.toLowerCase() as SetId);
-		}),
+		// stats: s.stats.filter((cardStat) => {
+		// 	const card = allCards.getCard(cardStat.cardId);
+		// 	return card && validArenaSets.includes(card.set?.toLowerCase() as SetId);
+		// }),
 	}));
 	console.debug(
 		'filteredCardStats',
 		filteredCardStats.flatMap((s) => s.stats.length).reduce((a, b) => a + b, 0),
 		aggregatedCardStats.flatMap((s) => s.stats.length).reduce((a, b) => a + b, 0),
 	);
-	await saveCardStats(filteredCardStats, timePeriod);
+	await saveCardStats(filteredCardStats, gameMode, timePeriod);
 
 	cleanup();
 	return { statusCode: 200, body: null };
@@ -70,27 +73,31 @@ export default async (event, context: Context): Promise<any> => {
 
 const dispatchEvents = async (context: Context) => {
 	const allTimePeriod: readonly TimePeriod[] = ['last-patch', 'past-20', 'past-7', 'past-3', 'current-season'];
+	const allGameModes: readonly string[] = ['arena', 'arena-underground', 'all'];
 	for (const timePeriod of allTimePeriod) {
-		const newEvent = {
-			dailyProcessing: true,
-			timePeriod: timePeriod,
-		};
-		const params = {
-			FunctionName: context.functionName,
-			InvocationType: 'Event',
-			LogType: 'Tail',
-			Payload: JSON.stringify(newEvent),
-		};
-		console.log('\tinvoking lambda', params);
-		const result = await lambda
-			.invoke({
+		for (const gameMode of allGameModes) {
+			const newEvent = {
+				dailyProcessing: true,
+				timePeriod: timePeriod,
+				gameMode: gameMode,
+			};
+			const params = {
 				FunctionName: context.functionName,
 				InvocationType: 'Event',
 				LogType: 'Tail',
 				Payload: JSON.stringify(newEvent),
-			})
-			.promise();
-		console.log('\tinvocation result', result);
-		await sleep(50);
+			};
+			console.log('\tinvoking lambda', params);
+			const result = await lambda
+				.invoke({
+					FunctionName: context.functionName,
+					InvocationType: 'Event',
+					LogType: 'Tail',
+					Payload: JSON.stringify(newEvent),
+				})
+				.promise();
+			console.log('\tinvocation result', result);
+			await sleep(50);
+		}
 	}
 };

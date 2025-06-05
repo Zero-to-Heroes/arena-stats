@@ -4,9 +4,13 @@ import { buildFileKeys, buildFileNamesForGivenDay } from '../common/utils';
 import { ArenaCardData, ArenaCardMatchup, ArenaCardStat, ArenaCardStats } from '../model';
 import { persistCardData } from './persist-data';
 
-export const handleCardStats = async (targetDate: string, s3: S3): Promise<void> => {
+export const handleCardStats = async (
+	gameMode: 'arena' | 'arena-underground',
+	targetDate: string,
+	s3: S3,
+): Promise<void> => {
 	const fileNames = buildFileNamesForGivenDay(targetDate);
-	const fileKeys = buildFileKeys('hourly', 'cards', fileNames);
+	const fileKeys = buildFileKeys('hourly', gameMode, 'cards', fileNames);
 	const hourlyRawData: readonly string[] = await Promise.all(
 		fileKeys.map((fileKey) => s3.readGzipContent(ARENA_STATS_BUCKET, fileKey, 1, false, 300)),
 	);
@@ -29,7 +33,7 @@ export const handleCardStats = async (targetDate: string, s3: S3): Promise<void>
 	// targetDate + 1 day
 	const lastUpdateDate = new Date(targetDate);
 	lastUpdateDate.setDate(lastUpdateDate.getDate() + 1);
-	await persistCardData(result, targetDate, s3);
+	await persistCardData(result, gameMode, targetDate, s3);
 };
 
 export const mergeCardStats = (allCardStats: readonly ArenaCardStat[]): readonly ArenaCardStat[] => {
